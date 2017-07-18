@@ -195,6 +195,8 @@ void AAM_Common::DrawAppearance(IplImage*image, const AAM_Shape& Shape,
 	const std::vector<double>& alpha = paw.__alpha;
 	const std::vector<double>& belta= paw.__belta;
 	const std::vector<double>& gamma = paw.__gamma;
+	int rect2W = refpaw.Width();
+	int rect2H = refpaw.Height();
 
 	minx = Shape.MinX(); miny = Shape.MinY();
 	maxx = Shape.MaxX(); maxy = Shape.MaxY();
@@ -221,7 +223,10 @@ void AAM_Common::DrawAppearance(IplImage*image, const AAM_Shape& Shape,
 				y2 = alpha[idx1]*refShape[v1].y + belta[idx1]*refShape[v2].y +  
 					gamma[idx1]*refShape[v3].y;
 				
-				if(y2 < 0 || x2 < 0) continue;	
+				if(y2 < 0) y2 = 0;
+				if(x2 < 0) x2 = 0;
+				if(y2 >= rect2H) y2 = rect2H - 1;
+				if(x2 >= rect2W) x2 = rect2W - 1;
 				idx2 = rect2[y2][x2];	
 				idxby3 = idx2 + (idx2<<1);	/* 3*idx2 */
 				
@@ -292,6 +297,11 @@ void AAM_Pyramid::BuildDetectMapping(const file_lists& pts_files,
 		printf("%i of %i\r", i, pts_files.size());
 		
 		IplImage* image = cvLoadImage(img_files[i].c_str(), -1);
+		if(image->depth != 8) {
+			printf("Only 8-bit images are supported, but %s is %d-bit\n", 
+					img_files[i].c_str(), image->depth);
+			continue;
+		}
 		
 		std::vector<AAM_Shape> DetShape;
 		bool flag = FaceDetect.DetectFace(DetShape, image);
